@@ -1,0 +1,25 @@
+{
+    "configurations": [
+        {
+            "name": ".NET Core Launch (remote console)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "publish",
+            "program": "/home/USERNAME/.dotnet/dotnet",
+            "args": ["/home/USERNAME/epaper/EPaperApp.dll"],
+            "cwd": "/home/USERNAME/epaper",
+            "stopAtEntry": false,
+            "console": "internalConsole",
+            "pipeTransport": {
+                "pipeCwd": "${workspaceFolder}",
+                "pipeProgram": "c:\\Program Files\\PuTTY\\plink.exe",
+                "pipeArgs": [
+                    "-pw",
+                    "PASSWORD",
+                    "USENAME@HOSTNAME"
+                ],
+                "debuggerPath": "/home/USERNAME/vsdbg/vsdbg"
+            }
+        }
+    ]
+}
