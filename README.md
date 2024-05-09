@@ -12,7 +12,7 @@
 ## Parts list:
 - [waveshare 2.9inch Touch E-Paper E-Ink Display HAT ](https://amzn.to/3UT26oe)
 - [Raspberry Pi Zero 2 W](https://amzn.to/3URNbdT)
-- [USB-C Power Adapter](https://amzn.to/4dvWG9S)
+- [USB-C input adapter](https://amzn.to/4dvWG9S) (solder it to the 5v/ground inputs on the board)
 
 ## 3D Print Case Model:
 
