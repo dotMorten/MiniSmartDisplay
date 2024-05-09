@@ -3,6 +3,11 @@
 
 ![image](https://github.com/dotMorten/MiniSmartDisplay/assets/1378165/bc9c14eb-dcb2-4f2e-bb5f-10d7d328611b)
 
+### Features
+- EPaper Driver
+- Touch Driver (VERY much work in progress - only detects you touched the screen somewhere right now)
+- Simple Home Assistant REST client
+- Simple app that cycles through some pages rendered with SkiaSharp, while pulling data from Home Assistant
 
 ## Parts list:
 - [waveshare 2.9inch Touch E-Paper E-Ink Display HAT ](https://amzn.to/3UT26oe)
