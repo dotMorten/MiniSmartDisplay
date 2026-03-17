@@ -16,7 +16,7 @@ namespace EPaperApp
         int Height { get; }
         event EventHandler Touched;
 
-        void DisplayImage(ReadOnlySpan<byte> buffer, bool partial);
+        void DisplayImage(SKBitmap bitmap, bool partial);
         void Clear(bool white);
     }
 
@@ -30,8 +30,10 @@ namespace EPaperApp
             uithread = new SynchronizationContext();
             if(RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             _iscreen = new EPaperScreen();
+#if WINDOWS
             else if(RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                _iscreen = new SimulatedScreen();
+                _iscreen = new SimulatedScreen(296, 128);
+#endif
             else
                 throw new PlatformNotSupportedException("Only Linux and Windows are supported");
             _iscreen.Touched += Touch_Touched;
@@ -85,25 +87,14 @@ namespace EPaperApp
         PageBase? lastRenderedPage;
         private void RenderScreen(PageBase page, bool partialUpdate)
         {
-            using (SKBitmap bitmap = new SKBitmap(_iscreen.Height, _iscreen.Width, SKColorType.Gray8, SKAlphaType.Opaque))
+            using (SKBitmap bitmap = new SKBitmap(_iscreen.Width, _iscreen.Height, SKColorType.Gray8, SKAlphaType.Opaque))
             {
                 using (SKCanvas canvas = new SKCanvas(bitmap))
                 {
                     page.GetPage(canvas, bitmap.Info);
                 }
-                using ImageBuffer b = new ImageBuffer(_iscreen.Height, _iscreen.Width);
-                for (int x = 0; x < bitmap.Width; x++)
-                {
-                    for (int y = 0; y < bitmap.Height; y++)
-                    {
-                        bitmap.GetPixel(x, y).ToHsl(out float h, out float s, out float l);
-                        b.SetPixel(x, y, l > 0.75);
-                    }
-                }
-                using var rotated = b.Rotate();
-                {
-                    this._iscreen.DisplayImage(rotated.Buffer, partial: partialUpdate);
-                }
+
+                this._iscreen.DisplayImage(bitmap, partial: partialUpdate);
                 lastRenderedPage = page;
             }
         }
@@ -116,12 +107,13 @@ namespace EPaperApp
             {
                 //await RenderScreen(screen);
                 currentScreen = pages[currentPageIndex];
-                UpdateScreen(force:true, partialUpdate: currentPageIndex > 0 || newPageTask.Task.IsCompleted);
+                UpdateScreen(force:true, partialUpdate: currentPageIndex > 0 || newPageTask?.Task.IsCompleted == true);
                 // Wait until the next minute but at least 3 seconds
                 int delay = (60 - DateTime.Now.Second) * 1000;
                 if (delay < 3000) delay += 60000;
-                newPageTask = new TaskCompletionSource();
-                await Task.WhenAny(Task.Delay(delay), newPageTask.Task);
+                newPageTask = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+                var task = newPageTask.Task;
+                await Task.WhenAny(Task.Delay(delay), task).ConfigureAwait(false);
                 currentPageIndex++;
                 if (currentPageIndex >= pages.Count)
                 {
@@ -129,7 +121,7 @@ namespace EPaperApp
                 }
             }
         }
-        TaskCompletionSource newPageTask = new TaskCompletionSource();
+        TaskCompletionSource? newPageTask;
         private void Touch_Touched(object? sender, EventArgs e)
         {
             newPageTask?.TrySetResult();

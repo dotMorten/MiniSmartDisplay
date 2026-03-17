@@ -52,7 +52,7 @@ namespace EPaperApp
             canvas.Clear(SKColors.White);
 
             int x = 100;
-            int y = 40;
+            int y = 30;
             int voffset = 20;
             float fontsize = 14;
 
