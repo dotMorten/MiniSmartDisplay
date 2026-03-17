@@ -12,8 +12,7 @@ namespace EPaperApp
     public static class HomeAssistantData
     {
         private const string HomeAssistentUrl = "http://homeassistant.local:8123";
-        private const string HomeAssistentAccessToken = "HOMEASSISTANT_ACCESS_TOKEN_HERE";
-        internal static HAClient HomeClient { get; } = new HAClient(Configuration.HomeAssistentAccessToken, Configuration.HomeAssistentUrl);
+	    internal static HAClient HomeClient { get; } = new HAClient(Configuration.HomeAssistentAccessToken, Configuration.HomeAssistentUrl);
 
         private static ConcurrentDictionary<string, HAData> data = new ConcurrentDictionary<string, HAData>();
 

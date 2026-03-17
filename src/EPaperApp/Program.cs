@@ -17,7 +17,7 @@ namespace EPaperApp
         public const string UnifiCameraSnap = "http://192.168.1.157/snap.jpeg";
 
         public const string HomeAssistentUrl = "http://192.168.1.138:8123";
-        public const string HomeAssistentAccessToken = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiI1MDU5ZDY3ZGFmNTc0NjBmOTQwNTZiNGQ3NWJjMWY4MCIsImlhdCI6MTYzMDI3NTIzOSwiZXhwIjoxOTQ1NjM1MjM5fQ.YIRKckVr5siqtkv8fR_M5WT8tfMu08MSZg1CzoZ0Mvo";
+        public const string HomeAssistentAccessToken = "HOMEASSISTANT_ACCESS_TOKEN_HERE";
     }
 
 
