@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Device.Gpio;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using dotMorten.HomeAssistent;
@@ -20,42 +20,6 @@ namespace EPaperApp
         void Clear(bool white);
     }
 
-    internal class EPaperScreen : IScreen
-    {
-         private EPaper.TouchController touch;
-        private GpioController _gpioController;
-        private EPaper.EPaper paper;
- 
-        public EPaperScreen()
-        {
-            _gpioController = new GpioController();
-            touch = new EPaper.TouchController(_gpioController, 27);
-            paper = EPaper.EPaper.Create2in9HatDisplay(_gpioController);
-            touch.Touched += Touch_Touched;
-
-        }
-
-        private void Touch_Touched(object? sender, EventArgs e)
-        {
-            Touched?.Invoke(this, EventArgs.Empty);
-        }
-
-        public void DisplayImage(ReadOnlySpan<byte> buffer, bool partial) 
-            => paper.DisplayImage(buffer, partial);
-
-        public void Dispose()
-        {
-            paper.Sleep();
-            paper.Dispose();
-            touch.Dispose();
-            _gpioController.Dispose();
-        }
-        public void Clear(bool white) => paper.Clear(white);
-        public event EventHandler? Touched;
-        public int Width => paper.Width;
-        public int Height => paper.Height;
-    }
-
     internal class SmartDisplay : IDisposable
     {
         private IScreen _iscreen;
@@ -64,7 +28,12 @@ namespace EPaperApp
         public SmartDisplay()
         {
             uithread = new SynchronizationContext();
+            if(RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             _iscreen = new EPaperScreen();
+            else if(RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                _iscreen = new SimulatedScreen();
+            else
+                throw new PlatformNotSupportedException("Only Linux and Windows are supported");
             _iscreen.Touched += Touch_Touched;
         }
 
