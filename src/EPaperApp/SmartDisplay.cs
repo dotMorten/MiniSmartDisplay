@@ -10,42 +10,83 @@ using SkiaSharp;
 
 namespace EPaperApp
 {
-    internal class SmartDisplay : IDisposable
+    public interface IScreen : IDisposable
     {
-        private EPaper.TouchController touch;
+        int Width { get; }
+        int Height { get; }
+        event EventHandler Touched;
+
+        void DisplayImage(ReadOnlySpan<byte> buffer, bool partial);
+        void Clear(bool white);
+    }
+
+    internal class EPaperScreen : IScreen
+    {
+         private EPaper.TouchController touch;
         private GpioController _gpioController;
         private EPaper.EPaper paper;
-
-        readonly SynchronizationContext uithread ;
-        public SmartDisplay()
+ 
+        public EPaperScreen()
         {
             _gpioController = new GpioController();
             touch = new EPaper.TouchController(_gpioController, 27);
             paper = EPaper.EPaper.Create2in9HatDisplay(_gpioController);
-            uithread = new SynchronizationContext();
             touch.Touched += Touch_Touched;
+
         }
 
+        private void Touch_Touched(object? sender, EventArgs e)
+        {
+            Touched?.Invoke(this, EventArgs.Empty);
+        }
+
+        public void DisplayImage(ReadOnlySpan<byte> buffer, bool partial) 
+            => paper.DisplayImage(buffer, partial);
+
+        public void Dispose()
+        {
+            paper.Sleep();
+            paper.Dispose();
+            touch.Dispose();
+            _gpioController.Dispose();
+        }
+        public void Clear(bool white) => paper.Clear(white);
+        public event EventHandler? Touched;
+        public int Width => paper.Width;
+        public int Height => paper.Height;
+    }
+
+    internal class SmartDisplay : IDisposable
+    {
+        private IScreen _iscreen;
+        readonly SynchronizationContext uithread ;
+
+        public SmartDisplay()
+        {
+            uithread = new SynchronizationContext();
+            _iscreen = new EPaperScreen();
+            _iscreen.Touched += Touch_Touched;
+        }
 
         public void Initialize()
         {
-            screens.Add(new UtilitiesScreen());
-            screens.Add(new TemperatureScreen());
-            screens.Add(new WeatherScreen());
-            foreach (var screen in screens)
+            pages.Add(new UtilitiesScreen());
+            pages.Add(new TemperaturePage());
+            pages.Add(new WeatherPage());
+            foreach (var screen in pages)
             {
                 screen.Initialize();
             }
             Console.WriteLine("Clearing display");
-            paper.Clear(true);
+            this._iscreen.Clear(true);
             Console.WriteLine("Display cleared");
             //Thread.Sleep(3000);
-            foreach (var screen in screens)
+            foreach (var screen in pages)
             {
                 screen.HasChanged += Screen_HasChanged;
             }
         }
-        private ScreenBase? currentScreen;
+        private PageBase? currentScreen;
 
         private void Screen_HasChanged(object? sender, EventArgs e)
         {
@@ -72,16 +113,16 @@ namespace EPaperApp
             }
         }
 
-        ScreenBase? lastRenderedScreen;
-        private void RenderScreen(ScreenBase screen, bool partialUpdate)
+        PageBase? lastRenderedPage;
+        private void RenderScreen(PageBase page, bool partialUpdate)
         {
-            using (SKBitmap bitmap = new SKBitmap(paper.Height, paper.Width, SKColorType.Gray8, SKAlphaType.Opaque))
+            using (SKBitmap bitmap = new SKBitmap(_iscreen.Height, _iscreen.Width, SKColorType.Gray8, SKAlphaType.Opaque))
             {
                 using (SKCanvas canvas = new SKCanvas(bitmap))
                 {
-                    screen.GetScreen(canvas, bitmap.Info);
+                    page.GetPage(canvas, bitmap.Info);
                 }
-                using ImageBuffer b = new ImageBuffer(paper.Height, paper.Width);
+                using ImageBuffer b = new ImageBuffer(_iscreen.Height, _iscreen.Width);
                 for (int x = 0; x < bitmap.Width; x++)
                 {
                     for (int y = 0; y < bitmap.Height; y++)
@@ -92,30 +133,30 @@ namespace EPaperApp
                 }
                 using var rotated = b.Rotate();
                 {
-                    paper.DisplayImage(rotated.Buffer, partial: partialUpdate);
+                    this._iscreen.DisplayImage(rotated.Buffer, partial: partialUpdate);
                 }
-                lastRenderedScreen = screen;
+                lastRenderedPage = page;
             }
         }
         bool isUpdating;
-        private List<ScreenBase> screens = new List<ScreenBase>();
-        int currentScreenIndex = 0;
+        private List<PageBase> pages = new List<PageBase>();
+        int currentPageIndex = 0;
         public async Task Run()
         {
             while (true)
             {
                 //await RenderScreen(screen);
-                currentScreen = screens[currentScreenIndex];
-                UpdateScreen(force:true, partialUpdate: currentScreenIndex > 0 || newPageTask.Task.IsCompleted);
+                currentScreen = pages[currentPageIndex];
+                UpdateScreen(force:true, partialUpdate: currentPageIndex > 0 || newPageTask.Task.IsCompleted);
                 // Wait until the next minute but at least 3 seconds
                 int delay = (60 - DateTime.Now.Second) * 1000;
                 if (delay < 3000) delay += 60000;
                 newPageTask = new TaskCompletionSource();
                 await Task.WhenAny(Task.Delay(delay), newPageTask.Task);
-                currentScreenIndex++;
-                if (currentScreenIndex >= screens.Count)
+                currentPageIndex++;
+                if (currentPageIndex >= pages.Count)
                 {
-                    currentScreenIndex = 0;
+                    currentPageIndex = 0;
                 }
             }
         }
@@ -127,12 +168,9 @@ namespace EPaperApp
 
         public void Dispose()
         {
-            foreach(var screen in screens.OfType<IDisposable>())
-                screen.Dispose();
-            paper.Sleep();
-            paper.Dispose();
-            touch.Dispose();
-            _gpioController.Dispose();
+            foreach(var page in pages.OfType<IDisposable>())
+                page.Dispose();
+           _iscreen.Dispose();
         }
     }
 }

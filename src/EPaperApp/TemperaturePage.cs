@@ -8,14 +8,14 @@ using SkiaSharp;
 
 namespace EPaperApp
 {
-    internal class TemperatureScreen : ScreenBase, IDisposable
+    internal class TemperaturePage : PageBase, IDisposable
     {
         private string temperatureEntityId = "sensor.tempest_temperature";
         private HAData? tempData;
         private HAData? poolData;
         private HAData? insideData;
 
-        public override void GetScreen(SKCanvas canvas, SKImageInfo info)
+        public override void GetPage(SKCanvas canvas, SKImageInfo info)
         {
             canvas.Clear(SKColors.White);
             using var font10 = new SKFont() { Size = 10, Subpixel = false, Edging = SKFontEdging.Alias };
@@ -59,7 +59,7 @@ namespace EPaperApp
             }
             //DrawTime(canvas, info);
             DrawTitle("Temperature", canvas, info);
-            base.GetScreen(canvas, info);
+            base.GetPage(canvas, info);
         }
         public void Dispose()
         {

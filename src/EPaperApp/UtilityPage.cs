@@ -8,7 +8,7 @@ using SkiaSharp;
 
 namespace EPaperApp
 {
-    internal class UtilitiesScreen : ScreenBase, IDisposable
+    internal class UtilitiesScreen : PageBase, IDisposable
     {
         private string current_meter_power_demand = "sensor.eagle_200_meter_power_demand";
         private string total_meter_energy_delivered = "sensor.eagle_200_total_meter_energy_delivered";
@@ -47,7 +47,7 @@ namespace EPaperApp
             return (value.Value * multiplier).ToString(formatString);
         }
 
-        public override void GetScreen(SKCanvas canvas, SKImageInfo info)
+        public override void GetPage(SKCanvas canvas, SKImageInfo info)
         {
             canvas.Clear(SKColors.White);
 
@@ -84,7 +84,7 @@ namespace EPaperApp
 
             //DrawTime(canvas, info);
             DrawTitle("Utilities", canvas, info);
-            base.GetScreen(canvas, info);
+            base.GetPage(canvas, info);
         }
         public void Dispose()
         {

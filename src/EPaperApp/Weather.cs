@@ -12,7 +12,7 @@ using SkiaSharp;
 
 namespace EPaperApp
 {
-    internal class WeatherScreen : ScreenBase, IDisposable
+    internal class WeatherPage : PageBase, IDisposable
     {
         private bool isDisposed;
         private dotMorten.WeatherGov.Gridpoints.Root? forecast;
@@ -26,7 +26,7 @@ namespace EPaperApp
         private string precipitationEntityId = "sensor.tempest_precipitation";
         private string wind_speedEntityId = "sensor.tempest_wind_speed_average";
 		
-        public override void GetScreen(SKCanvas canvas, SKImageInfo info)
+        public override void GetPage(SKCanvas canvas, SKImageInfo info)
         {
             canvas.Clear(SKColors.White);
 
@@ -85,7 +85,7 @@ namespace EPaperApp
 
             //DrawTime(canvas, info);
             DrawTitle("Weather", canvas, info);
-            base.GetScreen(canvas, info);
+            base.GetPage(canvas, info);
         }
         public void Dispose()
         {

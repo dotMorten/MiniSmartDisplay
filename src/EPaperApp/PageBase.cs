@@ -7,16 +7,16 @@ using SkiaSharp;
 
 namespace EPaperApp
 {
-    internal interface IStatusScreen
+    internal interface IStatusPage
     {
         void Initialize();
         bool IsReady { get; }
-        void GetScreen(SkiaSharp.SKCanvas canvas, SkiaSharp.SKImageInfo info);
+        void GetPage(SkiaSharp.SKCanvas canvas, SkiaSharp.SKImageInfo info);
 
         event EventHandler? HasChanged;
     }
 
-    internal abstract class ScreenBase : IStatusScreen
+    internal abstract class PageBase : IStatusPage
     {
         public abstract bool IsReady { get; }
 
@@ -29,7 +29,7 @@ namespace EPaperApp
         }
 
 
-        public virtual void GetScreen(SKCanvas canvas, SKImageInfo info)
+        public virtual void GetPage(SKCanvas canvas, SKImageInfo info)
         {
             IsDirty = false;
         }
