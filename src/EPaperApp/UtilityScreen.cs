@@ -17,9 +17,11 @@ namespace EPaperApp
         private string flume_sensor_home_current_day = "sensor.flume_sensor_home_current_day";// Today's water use
         private string flume_sensor_home_current = "sensor.flume_sensor_home_current";// Current water flow
         
-        private string solar_current_power_production = "sensor.envoy_121502008945_current_power_production"; // Current power production
-        private string solar_today_s_energy_production = "sensor.envoy_121502008945_today_s_energy_production";
-        private string solar_lifetime_energy_production = "sensor.envoy_121502008945_lifetime_energy_production";
+        private string solar_current_power_production = "sensor.envoy_482534013839_current_power_production"; // Current power production
+        private string solar_today_s_energy_production = "sensor.envoy_482534013839_energy_production_today";
+
+        private string battery_level = "sensor.home_percentage_charged_2";
+        private string battery_power = "sensor.home_battery_power";
 
         public override void Initialize()
         {
@@ -33,8 +35,9 @@ namespace EPaperApp
             waterData.Updated += Data_Updated;
 
             HomeAssistantData.LogData(solar_current_power_production, true, TimeSpan.FromMinutes(5));
-            HomeAssistantData.LogData(solar_today_s_energy_production, true, TimeSpan.FromMinutes(5));
-            data = HomeAssistantData.LogData(solar_lifetime_energy_production, true, TimeSpan.FromMinutes(10), get24delta: true);
+            HomeAssistantData.LogData(solar_today_s_energy_production, true, TimeSpan.FromMinutes(5), get24delta: true, getTodayDelta: true);
+            HomeAssistantData.LogData(battery_level, true, TimeSpan.FromMinutes(5));
+            HomeAssistantData.LogData(battery_power, true, TimeSpan.FromMinutes(5));
         }
 
         private string FormatValue(double? value, string formatString, double multiplier = 1)
@@ -56,17 +59,22 @@ namespace EPaperApp
             DrawText(canvas, "C", 10, 2, y + voffset - 2, centerHorizontal: SKTextAlign.Left);
             DrawText(canvas, "T", 10, 2, y + voffset*2 - 2, centerHorizontal: SKTextAlign.Left);
             DrawText(canvas, "24", 10, 2, y + voffset*3 - 2, centerHorizontal: SKTextAlign.Left);
+            DrawText(canvas, "Battery", 10, 2, y + voffset*4 - 2, centerHorizontal: SKTextAlign.Left);
 
             DrawText(canvas, "Electricity", 10, x, y, centerHorizontal: SKTextAlign.Right, bold: true);
-            DrawText(canvas, FormatValue(HomeAssistantData.GetData(current_meter_power_demand)?.ValueAsNumber(), "0W", 1000), fontsize, x, y+voffset, centerHorizontal: SKTextAlign.Right);
+            DrawText(canvas, FormatValue(HomeAssistantData.GetData(current_meter_power_demand)?.ValueAsNumber(), "0W", 1), fontsize, x, y+voffset, centerHorizontal: SKTextAlign.Right);
             DrawText(canvas, FormatValue(HomeAssistantData.GetData(total_meter_energy_delivered)?.TodayDelta, "0Wh", 1000), fontsize, x, y+voffset*2, centerHorizontal: SKTextAlign.Right);
             DrawText(canvas, FormatValue(HomeAssistantData.GetData(total_meter_energy_delivered)?._24hDelta, "0Wh", 1000), fontsize, x, y+voffset*3, centerHorizontal: SKTextAlign.Right);
+            var batpower = HomeAssistantData.GetData(battery_power)?.ValueAsNumber();
+            DrawText(canvas, FormatValue(HomeAssistantData.GetData(battery_level)?.ValueAsNumber(), "0", 1) + "%", fontsize, x, y+voffset*4, centerHorizontal: SKTextAlign.Right);
+            DrawText(canvas, batpower == 0 ? "" : batpower < 0 ? " (Charging)" : " (Discharging)", fontsize, x, y+voffset*4, centerHorizontal: SKTextAlign.Left);
 
             x = 185;
             DrawText(canvas, "Solar", 10, x, y, centerHorizontal: SKTextAlign.Right, bold: true);
-            DrawText(canvas, HomeAssistantData.GetData(solar_current_power_production)?.Value("0") ?? "N/A", fontsize, x, y+voffset, centerHorizontal: SKTextAlign.Right);
-            DrawText(canvas, HomeAssistantData.GetData(solar_today_s_energy_production)?.Value("0")?.ToString() ?? "N/A", fontsize, x, y+voffset*2, centerHorizontal: SKTextAlign.Right);
-            DrawText(canvas, FormatValue(HomeAssistantData.GetData(solar_lifetime_energy_production)?._24hDelta, "0Wh"), fontsize, x, y+voffset*3, centerHorizontal: SKTextAlign.Right);
+            DrawText(canvas, FormatValue(HomeAssistantData.GetData(solar_current_power_production)?.ValueAsNumber(), "0W", 1), fontsize, x, y+voffset, centerHorizontal: SKTextAlign.Right);
+            DrawText(canvas, FormatValue(HomeAssistantData.GetData(solar_today_s_energy_production)?.TodayDelta, "0Wh", 1000), fontsize, x, y+voffset*2, centerHorizontal: SKTextAlign.Right);
+            DrawText(canvas, FormatValue(HomeAssistantData.GetData(solar_today_s_energy_production)?._24hDelta, "0Wh", 1000), fontsize, x, y+voffset*3, centerHorizontal: SKTextAlign.Right);
+
 
             x = 275;
             DrawText(canvas, "Water", 10, x, y, centerHorizontal: SKTextAlign.Right, bold: true);
@@ -87,7 +95,8 @@ namespace EPaperApp
             HomeAssistantData.RemoveData(flume_sensor_home_current);
             HomeAssistantData.RemoveData(solar_current_power_production);
             HomeAssistantData.RemoveData(solar_today_s_energy_production);
-            HomeAssistantData.RemoveData(solar_lifetime_energy_production);
+            HomeAssistantData.RemoveData(battery_level);
+            HomeAssistantData.RemoveData(battery_power);
         }
 
         public override bool IsReady => true;
