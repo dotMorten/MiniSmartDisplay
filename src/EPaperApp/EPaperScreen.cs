@@ -25,7 +25,7 @@ namespace EPaperApp
 
         public void DisplayImage(SKBitmap bitmap, bool partial)
         {
-            using ImageBuffer b = new ImageBuffer(Height, Width);
+            using ImageBuffer b = new ImageBuffer(Width, Height);
             for (int x = 0; x < bitmap.Width; x++)
             {
                 for (int y = 0; y < bitmap.Height; y++)
